@@ -81,7 +81,16 @@ doc.css('.empReview').each do |review|
 
   # Pros/Cons
   review.css('.v2__EIReviewDetailsV2__fullWidth')[0..1].each do |review_detail|
-    row << review_detail.andand.css('p').andand.map(&:text).andand.join("\n").andand.sub(/^(Pros|Cons)/, '').andand.strip
+    review_text = review_detail.andand.css('p').andand.map(&:text).andand.join("\n")
+    review_text_cleaned = review_text.
+      andand.sub(/^(Pros|Cons)/, '').
+      # remove numbers from ordered lists
+      andand.gsub(/^[0-9]{1,2}\.\s?/, "").
+      # remove dashes from unordered lists
+      andand.gsub(/^\s?(\-|\•|\*)\s?/, "").
+      andand.gsub(/\n/, "\n\n").
+      andand.strip
+    row << review_text_cleaned
   end
 
   unless SPREADSHEET_KEY.to_s.empty?
