@@ -8,6 +8,30 @@ tell application "Safari"
 end tell
 EOF
 
+OUTFILE = ARGV[0]
+
+FIELDS = [
+  "Date",
+  "Summary",
+  "Rating",
+  "Current Employee?",
+  "Title",
+  "Location",
+  "NPS",
+  "Outlook",
+  "CEO Approval",
+  "Full Time?",
+  "Tenure",
+  "Feedback",
+  "Feedback (cont.)"
+]
+
+unless OUTFILE.to_s == '' || File.exists?(OUTFILE)
+  File.open(OUTFILE, 'w') do |f|
+    f.write FIELDS.to_csv
+  end
+end
+
 STDERR.puts "Pulling HTML..."
 
 outer_html = `osascript -e '#{APPLESCRIPT}'`
@@ -84,5 +108,11 @@ doc.css('.empReview').each do |review|
     row << review_text_cleaned
   end
 
-  STDOUT.puts(row.to_csv)
+  unless OUTFILE.to_s == ''
+    File.open(OUTFILE, 'a') do |f|
+      f.write(row.to_csv)
+    end
+  else
+    STDOUT.puts(row.to_csv)
+  end
 end
