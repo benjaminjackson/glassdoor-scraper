@@ -15,13 +15,9 @@ FIELDS = [
   "Summary",
   "Rating",
   "Current Employee?",
+  "Tenure",
   "Title",
   "Location",
-  "NPS",
-  "Outlook",
-  "CEO Approval",
-  "Full Time?",
-  "Tenure",
   "Feedback",
   "Feedback (cont.)"
 ]
@@ -45,54 +41,44 @@ doc.css('.empReview').each do |review|
 
   next if review.at_css('.featuredFlag')
 
+  # Parse date and title
+  date_and_title = review.at_css('.authorJobTitle').andand.text
+  date = date_and_title.split(" - ").first
+  title = date_and_title.split(" - ").last
+
   # Date
-  row << DateTime.parse(review.at_css('time.date').andand.text)
+  row << date
 
   # Summary
-  row << review.at_css('.summary').text.andand.strip
+  row << review.at_css('.reviewLink').text.andand.strip
 
-  # Title
-  row << review.at_css('.rating [title]')["title"].to_f
+  # Rating
+  row << review.at_css('.ratingNumber').text.andand.to_i
 
-  current_past_and_title = review.at_css('.authorJobTitle').andand.text.andand.strip
+  current_past = review.at_css('span:contains("Current Employee")').andand.text.andand.strip
+  current_past ||= review.at_css('span:contains("Former Employee")').andand.text.andand.strip
 
   # Current or past employee
-  if current_past_and_title.split(" - ").length
-    current_past = current_past_and_title.split(" - ").andand.first
-    row << current_past.andand.include?("Current")
+  if current_past
+    row << current_past.andand.include?("Current") ? "Current Employee" : "Former Employee"
   else
     # Glassdoor doesn’t force employees to specify current/past
     row << "Unspecified"
   end
 
-  # Title
-  row << current_past_and_title.split(" - ").last
-
-  # Location
-  row << review.at_css('.authorLocation').andand.text.andand.strip
-
-  # NPS
-  row << review.css('.reviewBodyCell.recommends span').andand.first.andand.text.andand.strip
-
-  # Outlook
-  row << review.css('.reviewBodyCell.recommends span').andand[1].andand.text.andand.strip
-
-  # CEO Approval
-  row << review.css('.reviewBodyCell.recommends span').andand[2].andand.text.andand.strip
-
-  employment_status_and_tenure = review.at_css('.mainText').andand.text.andand.strip
-
-  # Employment Status
-  full_time = employment_status_and_tenure.match(/[a-z]+\-time/).andand[0].andand.include?("full")
-  row << full_time
-
   # Tenure
-  if employment_status_and_tenure.include?(" for ")
-    row << employment_status_and_tenure.sub(/I (?:worked|have been working) at .+ for /, '').capitalize
+  if current_past.include?(", ")
+    row << current_past.split(", ").last.capitalize
   else
     # Not all reviews provide this
     row << "Unspecified"
   end
+
+  # Employee Title
+  row << title
+
+  # Location
+  row << review.at_css('.authorLocation').andand.text.andand.strip
 
   # Pros/Cons
   review.css('.v2__EIReviewDetailsV2__fullWidth')[0..1].each do |review_detail|
