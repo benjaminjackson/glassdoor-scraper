@@ -1,4 +1,5 @@
 require 'csv'
+require 'time'
 require 'nokogiri'
 require 'andand'
 
@@ -18,8 +19,8 @@ FIELDS = [
   "Tenure",
   "Title",
   "Location",
-  "Feedback",
-  "Feedback (cont.)"
+  "Pros",
+  "Cons"
 ]
 
 unless OUTFILE.to_s == '' || File.exists?(OUTFILE)
@@ -44,10 +45,10 @@ doc.css('.empReview').each do |review|
   # Parse date and title
   date_and_title = review.at_css('.authorJobTitle').andand.text
   date = date_and_title.split(" - ").first
-  title = date_and_title.split(" - ").last
+  title = date_and_title.include?(" - ") ? date_and_title.split(" - ").last : "Anonymous Employee"
 
   # Date
-  row << date
+  row << Time.parse(date).strftime('%Y-%m-%dT%H:%M:%S.%L%z')
 
   # Summary
   row << review.at_css('.reviewLink').text.andand.strip
